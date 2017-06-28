@@ -5,7 +5,6 @@
 #include "ofxGui.h"
 #include "ofxOpenCv.h"
 #include "ofxKinect.h"
-#include "ofxVideoRecorder.h"
 
 using namespace flowTools;
 
@@ -30,21 +29,15 @@ class ofApp : public ofBaseApp{
 		bool drawDepth = true;
 		ofFbo kinectFbo;
 
-		// ofVideoGrabber      vidGrabber;
-    	ofxVideoRecorder    vidRecorder;
-    	bool bRecording;
+		
 	    int sampleRate;
-	    int channels;
-	    string fileName;
-	    string fileExt;
+	    int channels;	    
         ofSoundStream       soundStream;
 
         ofPixels stagePixels;
 		ofImage stageImg;
 		int nframes = 0;
 
-
-	    void recordingComplete(ofxVideoRecorderOutputFileCompleteEventArgs& args);
         void audioIn(float * input, int bufferSize, int nChannels);
 
 

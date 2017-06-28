@@ -8,26 +8,10 @@ void ofApp::setup(){
 	drawWidth = 1024;
 	drawHeight = 768;
 
-	// VIDEO RECORDING
+	// SOUND
 	sampleRate = 44100;
     channels = 2;
-    // vidGrabber.setDesiredFrameRate(30);
-    // vidGrabber.initGrabber(drawWidth, drawHeight);
-    fileName = "testMovie";
-    fileExt = ".mov"; // ffmpeg uses the extension to determine the container type. run 'ffmpeg -formats' to see supported formats
-
-    // override the default codecs if you like
-    // run 'ffmpeg -codecs' to find out what your implementation supports (or -formats on some older versions)
-    vidRecorder.setVideoCodec("mpeg4");
-    vidRecorder.setVideoBitrate("800k");
-    vidRecorder.setAudioCodec("mp3");
-    vidRecorder.setAudioBitrate("192k");
     soundStream.setup(this, 0, channels, sampleRate, 256, 4);
-
-
-    ofAddListener(vidRecorder.outputFileCompleteEvent, this, &ofApp::recordingComplete);
-
-    bRecording = false;	
 
     stageImg.allocate(drawWidth,drawHeight,ofImageType::OF_IMAGE_COLOR_ALPHA);
 
@@ -178,34 +162,6 @@ void ofApp::update(){
 		"; nearThresh="+ ofToString(nearThreshold)+
 		"; farThresh=" + ofToString(farThreshold));
 
-	// VIDEO
- 	// vidGrabber.update();
-    if(bRecording){
-        // bool success = vidRecorder.addFrame(vidGrabber.getPixels());
-        
-        stageImg.getTexture().loadScreenData(0, 0, drawWidth, drawHeight);
-		stageImg.getTexture().readToPixels(stagePixels);		
-		// flip vertically; OpenGL uses opposite convention than OFX
-		stagePixels.mirror(true, false);
-
-		// ofSaveImage(stagePixels,"blah"+ofToString(nframes,4,'0')+".png");
-		// nframes++;
-		bool success = vidRecorder.addFrame(stagePixels);
-
-        if (!success) {
-            ofLogWarning("This frame was not added!");
-        }
-    }
-
-    // Check if the video recorder encountered any error while writing video frame or audio smaples.
-    if (vidRecorder.hasVideoError()) {
-        ofLogWarning("The video recorder failed to write some frames!");
-    }
-
-    if (vidRecorder.hasAudioError()) {
-        ofLogWarning("The video recorder failed to write some audio samples!");
-    }
-
 	// KINECT
 	kinect.update();
 
@@ -274,8 +230,6 @@ void ofApp::update(){
 	}
 
 	// update fluid simulation
-	
-	
 	fluidSimulation.addVelocity(opticalFlow.getOpticalFlowDecay());
 	fluidSimulation.addDensity(velocityMask.getColorMask());
 	fluidSimulation.addTemperature(velocityMask.getLuminanceMask());
@@ -325,12 +279,6 @@ void ofApp::draw(){
 		logo.draw(0, 0 , drawWidth , drawHeight);
 	}
 
-	// stringstream ss;
- //    ss << "video queue size: " << vidRecorder.getVideoQueueSize() << endl
- //    << "audio queue size: " << vidRecorder.getAudioQueueSize() << endl
- //    << "FPS: " << ofGetFrameRate() << endl
- //    << (bRecording?"pause":"start") << " recording: r" << endl
- //    << (bRecording?"close current video file: c":"") << endl;
 
     // ofSetColor(0,0,0,100);
     // ofDrawRectangle(0, 0, 260, 75);
@@ -448,43 +396,16 @@ void ofApp::keyPressed(int key){
 
 //--------------------------------------------------------------
 void ofApp::audioIn(float *input, int bufferSize, int nChannels){
-    if(bRecording)
-        vidRecorder.addAudioSamples(input, bufferSize, nChannels);
+
 }
 
-//--------------------------------------------------------------
-void ofApp::recordingComplete(ofxVideoRecorderOutputFileCompleteEventArgs& args){
-    cout << "The recoded video file is now complete." << endl;
-}
 
 //--------------------------------------------------------------
 void ofApp::keyReleased(int key){
 	if (key==OF_KEY_SHIFT)
 	{
 		threshStep = 1;
-	}
-	if(key=='r'){
-        bRecording = !bRecording;
-        if(bRecording && !vidRecorder.isInitialized()) {
-            vidRecorder.setup(fileName+ofGetTimestampString()+fileExt, drawWidth, drawHeight, 30, sampleRate, channels);
-//          vidRecorder.setup(fileName+ofGetTimestampString()+fileExt, vidGrabber.getWidth(), vidGrabber.getHeight(), 30); // no audio
-//            vidRecorder.setup(fileName+ofGetTimestampString()+fileExt, 0,0,0, sampleRate, channels); // no video
-//          vidRecorder.setupCustomOutput(vidGrabber.getWidth(), vidGrabber.getHeight(), 30, sampleRate, channels, "-vcodec mpeg4 -b 1600k -acodec mp2 -ab 128k -f mpegts udp://localhost:1234"); // for custom ffmpeg output string (streaming, etc)
-
-            // Start recording
-            vidRecorder.start();
-        }
-        else if(!bRecording && vidRecorder.isInitialized()) {
-            vidRecorder.setPaused(true);
-        }
-        else if(bRecording && vidRecorder.isInitialized()) {
-            vidRecorder.setPaused(false);
-        }
-    }
-    if(key=='c'){
-        bRecording = false;
-        vidRecorder.close();
-    }
+	}	
 }
 
 //--------------------------------------------------------------
@@ -534,6 +455,5 @@ void ofApp::dragEvent(ofDragInfo dragInfo){
 
 //--------------------------------------------------------------
 void ofApp::exit(){
-    ofRemoveListener(vidRecorder.outputFileCompleteEvent, this, &ofApp::recordingComplete);
-    vidRecorder.close();
+
 }

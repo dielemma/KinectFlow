@@ -2,4 +2,3 @@ ofxFlowTools
 ofxGui
 ofxKinect
 ofxOpenCv
-ofxVideoRecorder
