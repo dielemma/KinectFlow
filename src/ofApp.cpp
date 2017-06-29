@@ -8,6 +8,9 @@ void ofApp::setup(){
 	drawWidth = 1024;
 	drawHeight = 768;
 
+
+
+
 	// SOUND
 	sampleRate = 44100;
     channels = 2;
@@ -34,21 +37,9 @@ void ofApp::setup(){
 
 	//------------------------------------
 	// SIMULATION STUFF
-
-	
 	flowWidth = drawWidth / 4;
 	flowHeight = drawHeight /4;
-
 	tmpFbo.allocate(drawWidth, drawHeight, GL_RGBA32F);
-
-	// forces
-	drawForces = new ftDrawForce[3];
-	drawForces[0].setup(drawWidth, drawHeight, FT_DENSITY, true);
-	drawForces[0].setName("draw density");
-	drawForces[1].setup(drawWidth, drawHeight, FT_VELOCITY, true);
-	drawForces[1].setName("draw velocity");
-	drawForces[2].setup(drawWidth, drawHeight, FT_TEMPERATURE, true);
-	drawForces[2].setName("draw temperature");
 
 	// flow, mask, simulation
 	opticalFlow.setup(flowWidth, flowHeight);
@@ -56,13 +47,18 @@ void ofApp::setup(){
 	fluidSimulation.setup(flowWidth, flowHeight, drawWidth, drawHeight);
 	fluidSimulation.setDissipation(0.001);
 	fluidSimulation.setGravity(ofVec2f(0,5));
+	fluidSimulation.setViscosity(0.1);
 	particleFlow.setup(flowWidth, flowHeight, drawWidth, drawHeight);
 
 	// LOGO
-	logo.load("logo_OASC.png");
-	logo.resize(drawWidth, drawHeight);
-	fluidSimulation.addObstacle(logo.getTexture());
+	images.push_back("logo_sequence.png");
+	images.push_back("logo_css.png");
 	showLogo = true;
+	logoID = 1;	
+		logo.load(images[logoID]);
+	logo.resize(drawWidth, drawHeight);
+	tex = logo.getTexture();
+	logoID = 0;
 
 	// VISUALIZATION
 	displayScalar.setup(flowWidth, flowHeight);
@@ -71,96 +67,185 @@ void ofApp::setup(){
 	pressureField.setup(flowWidth / 4, flowHeight / 4);
 	velocityTemperatureField.setup(flowWidth / 4, flowHeight / 4);
 
-	// KINECT
+	
+
 
 	// time
 	t = ofGetElapsedTimef();
+	
+	getXMLsources();
 
-	sourceRadius = 0.1;
-	for (int i=0; i<nForces; i++)
+	initsources();
+
+	initflow();
+
+}
+
+//--------------------------------------------------------------
+void ofApp::initflow(){
+
+	// fluidSimulation
+	fluidSimulation.reset();
+	// fluidSimulation.setup(flowWidth, flowHeight, drawWidth, drawHeight);
+	// fluidSimulation.setDissipation(0.001);
+	// fluidSimulation.setGravity(ofVec2f(0,5));
+	// fluidSimulation.setViscosity(0.1);
+
+	if (logoID<images.size())
 	{
+		showLogo = true;
+
+		logo.clear();	
+		logo.load(images[logoID]);
+		logo.resize(drawWidth, drawHeight);
 		
+		ofSetColor(255);
+		tex = logo.getTexture();
+
+
+		// fluidSimulation.addObstacle(logo.getTexture());
+		fluidSimulation.addObstacle(tex);
+
+		
+	}	
+	else
+	{
+		showLogo = false;
+	}
+}
+
+//--------------------------------------------------------------
+void ofApp::initsources(){
+
+	// forces	
+	drawForces = new ftDrawForce[3];
+	drawForces[0].setup(drawWidth, drawHeight, FT_DENSITY, true);
+	drawForces[0].setName("draw density");
+	drawForces[1].setup(drawWidth, drawHeight, FT_VELOCITY, true);
+	drawForces[1].setName("draw velocity");
+	drawForces[2].setup(drawWidth, drawHeight, FT_TEMPERATURE, true);
+	drawForces[2].setName("draw temperature");
+
+	int N;
+	
+	if (sourceMode == 0)
+	{
+		N = NS1;
+	}
+	else
+	{
+		N = sourceX.size();
 	}
 
-	// sourceX.push_back(0.1);
-	// sourceY.push_back(0.5);
-	// velocityX.push_back(0.01);
-	// velocityY.push_back(-0.005);
+	ofFloatColor c;
+	if (sourceMode == 1)
+	{
+		c = c1;
+	}
+	else if (sourceMode ==2 )
 
-	// sourceX.push_back(0.9);
-	// sourceY.push_back(0.5);
-	// velocityX.push_back(-0.01);
-	// velocityY.push_back(-0.005);
+	{
+		c = c2;
+	}
 
-	// LOWERS
-	sourceX.push_back(0.15);
-	sourceY.push_back(1);
-	velocityX.push_back(0.0001);
-	velocityY.push_back(-0.002);
-	radii.push_back(0.12);
-	colors.push_back(ofFloatColor(0.9,0.82,0.17,0.8));
-
-	sourceX.push_back(0.5);
-	sourceY.push_back(1.05);
-	velocityX.push_back(0);
-	velocityY.push_back(-0.038);
-	radii.push_back(0.16);
-	colors.push_back(ofFloatColor(0.85,0.01,0.01,0.8));
-
-	sourceX.push_back(0.85);
-	sourceY.push_back(1);
-	velocityX.push_back(-0.0001);
-	velocityY.push_back(-0.002);
-	radii.push_back(0.12);
-	// colors.push_back(ofFloatColor(0.2,0.0,0.8,0.8));
-	colors.push_back(ofFloatColor(0.9,0.82,0.17,0.8));
-
-	// UPPERS
-	sourceX.push_back(0.4);
-	sourceY.push_back(-0.01);
-	velocityX.push_back(-0.001);
-	velocityY.push_back(0.0015);
-	radii.push_back(0.15);
-	colors.push_back(ofFloatColor(0.55,0.9,1.0,0.2));
-	// colors.push_back(ofFloatColor(0.8,0.8,0.8,0.8));
-
-	sourceX.push_back(0.6);
-	sourceY.push_back(-0.0);
-	velocityX.push_back(0.001);
-	velocityY.push_back(0.0015);
-	radii.push_back(0.15);
-	// colors.push_back(ofFloatColor(0.59,0.0196,0.1,0.8));
-	colors.push_back(ofFloatColor(0.55,0.9,1.0,0.2));
-	
-	
-	
-	
-	
-	
-
-
-	// for (int i=0; i<sourceX.size(); i++)
-	for (int i=0; i<3; i++)
+	for (int i=0; i<N; i++)
 	{
 		drawForces[0].setRadius(radii[i]);
-		drawForces[0].setForce(colors[i]);
+		if (i<NS1)
+		{
+			drawForces[0].setForce(colors[i]);	
+		}
+		else
+		{
+			drawForces[0].setForce(c);
+		}
+		
 		drawForces[0].applyForce(ofVec2f(sourceX[i],sourceY[i]));
 		
 		drawForces[1].setRadius(radii[i]/2);
 		drawForces[1].setForce(ofVec2f(velocityX[i],velocityY[i]));
 		drawForces[1].applyForce(ofVec2f(sourceX[i],sourceY[i]));
 	}
-	
 
 	drawForces[2].applyForce(ofVec2f(-0.1,0.5));
-
 }
+
+
 
 //--------------------------------------------------------------
 void ofApp::update(){
 	ofSetWindowTitle("FPS="+ofToString(round(ofGetFrameRate()))+
 		"; nearThresh="+ ofToString(nearThreshold)+
 		"; farThresh=" + ofToString(farThreshold));
+
+	// time
+	dt = ofGetElapsedTimef() - t;
+	t = ofGetElapsedTimef();
+
+	// cycle logos every so often
+	t_ms = ofGetElapsedTimeMillis();
+	int t_s = t_ms/1000;
+	if (t_s>0 && t_s % (60*5) == 0)
+	{
+		if (!(fadeOut||fadeIn ))
+		{
+			ofLog(OF_LOG_NOTICE,"cycle logo");
+			cycleLogo();
+		}
+		
+	}
+
+	t_hours = ofGetHours();
+	t_mins = ofGetMinutes();
+	if (t_hours>22 && (t_hours <= 23 && t_mins<30 ))
+	{
+		sourceMode = 0;
+	}
+	else if((t_hours>=23 && t_mins>=30) || t_hours<1)
+	{
+		sourceMode = 1;		
+	}
+	else
+	{
+		sourceMode = 2;
+	}
+
+	if (fadeOut)
+	{
+		if(mastBright>=0.02)
+		{
+			mastBright *= 0.99;
+		}
+		else
+		{
+			fadeOut = false;
+			fadeIn = true;
+			doReset = true;
+		}			
+	}
+	if (fadeIn)
+	{
+		if (mastBright==0)
+		{
+			mastBright = 0.02;
+		}
+
+		if(mastBright<1.0)
+		{
+			mastBright*=1.01;			
+		}
+		else
+		{
+			fadeIn = false;
+		}
+	}
+
+	if (doReset)
+	{
+		doReset = false;
+		initsources();
+		initflow();
+	}
 
 	// KINECT
 	kinect.update();
@@ -206,10 +291,7 @@ void ofApp::update(){
 	grayImage.draw(x0,y0,tmpScale*drawWidth,tmpScale*drawHeight);
 	ofPopMatrix();
 	kinectFbo.end();
-
-	// time
-	dt = ofGetElapsedTimef() - t;
-	t = ofGetElapsedTimef();
+	
 
 	// forces
 	for (int i=0; i< nForces; i++)
@@ -243,6 +325,8 @@ void ofApp::update(){
 //--------------------------------------------------------------
 void ofApp::draw(){
 	ofClear(0,0);
+	ofSetColor(255,255,255,mastBright*255);
+
 	drawComposite();
 
 	// vidGrabber.draw(0,0);
@@ -276,24 +360,31 @@ void ofApp::draw(){
 	}
 	if (showLogo)
 	{
+		// ofEnableAlphaBlending();
+		ofSetColor(255,255,255,255*mastBright);
 		logo.draw(0, 0 , drawWidth , drawHeight);
+		// ofDisableAlphaBlending();
 	}
 
+	if (debug)
+	{
+		ofSetColor(255);
+		ofDrawBitmapString("FPS = "+ofToString(round(ofGetFrameRate())), 10, 20);
+		ofDrawBitmapString("nearThresh = " + ofToString(nearThreshold), 10, 40);
+		ofDrawBitmapString("farThresh = " + ofToString(farThreshold), 10, 60);
+		ofDrawBitmapString("logoID = " + ofToString(logoID), 10, 80);
+		ofDrawBitmapString("sourceMode = " + ofToString(sourceMode), 10, 100);
 
-    // ofSetColor(0,0,0,100);
-    // ofDrawRectangle(0, 0, 260, 75);
-    // ofSetColor(255, 255, 255);
-    // ofDrawBitmapString(ss.str(),15,15);
+		ofDrawBitmapString("t=" + ofToString(t),drawWidth-80,20);
+		ofDrawBitmapString("t_ms="+ ofToString(t_ms),drawWidth-80,40);
+		ofDrawBitmapString(ofToString(t_ms/1000 % (60)),drawWidth-80,60);
 
-	// tmpFbo.begin();
-	// ofClear(0,0,0,0);
-	// ofSetColor(255);
-	// ofFill();
-	// ofDrawRectangle(0,0,200,200);
-	// tmpFbo.end();
-	// tmpFbo.draw(0,0,drawWidth,drawHeight);
-	// ofSetColor(255);
-	// ofDrawBitmapString("strength="+ofToString(drawForces[0].getStrength()), 10,10);
+		ofDrawBitmapString("SYS "+ofToString(t_hours) + ":" + ofToString(t_mins),drawWidth-80,90);
+
+
+		ofSetColor(255);
+		tex.draw(924,668,100,100);
+	}
 }
 
 //--------------------------------------------------------------
@@ -302,17 +393,14 @@ void ofApp::updateConstantSources()
 
 	if (startFlow)
 	{
-		drawForces[0].setStrength(1 + sin(2.0*3.14*t/3));
-		if (drawForces[0].getStrength()<0.5)
-		{
-			drawForces[0].setStrength(0);
-		}
+	
+		float T = 2*0.97;
 
-		float s = 0.1+pow(sin(2.0*3.14*t/4),16);
+		float s = 0.3*pow(sin(1.0*3.14*t/T),16);
 
 		drawForces[0].setStrength(s);
 
-		float v = 1 + 0.2*sin(2.0*3.14*2/4);
+		float v = 1 + 0.5*sin(1.0*3.14*t/T);
 		drawForces[1].setStrength(v);
 	}
 	else
@@ -321,21 +409,6 @@ void ofApp::updateConstantSources()
 		drawForces[1].setStrength(1);
 	}
 
-	// sourceRadius = 0.1 + 0.05 * sin(2.0*3.14*t);
-	// for (int i=0; i<nForces; i++)
-	// {
-	// 	drawForces[i].setRadius(sourceRadius);
-	// }
-
-
-	// tmpFbo.begin();
-	// ofClear(0,0,0,0);
-	// ofSetColor(255);
-	// ofFill();
-	// ofDrawCircle(50,50,20,20);
-	// tmpFbo.end();
-	
-	// fluidSimulation.addDensity(tmpFbo.getTexture());
 
 }
 
@@ -353,9 +426,91 @@ void ofApp::drawComposite(int x, int y, int w, int h){
 }
 
 //--------------------------------------------------------------
+void ofApp::cycleLogo()
+{
+	logoID++;
+	logoID = logoID%(images.size() + 1);
+	fadeOut = true;
+}
+
+//--------------------------------------------------------------
+void ofApp::getXMLsources()
+{
+	// XML SOURCES
+	if (XML.load("source_config.xml"))
+	{
+		ofLog(OF_LOG_NOTICE,"Loaded XML sources");
+	}
+	else
+	{
+		ofLog(OF_LOG_ERROR,"Failed to load XML sources");
+	}
+
+
+
+	
+
+	if(XML.exists("SOURCE"))
+	{
+		ofLog(OF_LOG_NOTICE,"SOURCE");
+		if(XML.setTo("SOURCE[0]"))
+		{
+			do
+				{
+					double x = XML.getValue<double>("X");
+					sourceX.push_back(x);
+					double y = XML.getValue<double>("Y");
+					sourceY.push_back(y);
+					double vX = XML.getValue<double>("vX");
+					velocityX.push_back(vX);
+					double vY = XML.getValue<double>("vY");
+					velocityY.push_back(vY);
+					double R = XML.getValue<double>("R");
+					radii.push_back(R);
+					double cR = XML.getValue<double>("cR");
+					double cG = XML.getValue<double>("cG");
+					double cB = XML.getValue<double>("cB");
+					double cA = XML.getValue<double>("cA");
+					colors.push_back(ofFloatColor(cR,cG,cB,cA));
+				}
+				while(XML.setToSibling());
+				XML.setToParent();
+		}		
+	}
+
+	if(XML.exists("PARAMS"))
+	{
+		ofLog(OF_LOG_NOTICE,"PARAMS");
+		
+		XML.setTo("PARAMS[0]");
+
+		NS1 = XML.getValue<int>("NS1");
+
+		
+		float cR1 = XML.getValue<float>("cR1");
+		float cG1 = XML.getValue<float>("cG1");
+		float cB1 = XML.getValue<float>("cB1");
+		float cA1 = XML.getValue<float>("cA1");
+		c1 = ofFloatColor(cR1,cG1,cB1,cA1);
+
+		float cR2 = XML.getValue<float>("cR2");
+		float cG2 = XML.getValue<float>("cG2");
+		float cB2 = XML.getValue<float>("cB2");
+		float cA2 = XML.getValue<float>("cA2");
+		c2 = ofFloatColor(cR2,cG2,cB2,cA2);
+
+		ofLog(OF_LOG_NOTICE,"cR2="+ofToString(cR2));
+	}
+}
+
+//--------------------------------------------------------------
 void ofApp::keyPressed(int key){
 
-
+	if(key=='r')
+	{
+		doReset = true;
+		showLogo = !showLogo;
+	}
 	
 	if(key==OF_KEY_UP)
 	{
@@ -391,6 +546,27 @@ void ofApp::keyPressed(int key){
 	if(key==' ')
 	{
 		drawDepth = !drawDepth;
+	}
+
+	if(key=='f')
+	{
+		fadeIn = false;
+		fadeOut = true;
+	}
+
+	if(key=='2')
+	{
+		if (!(fadeIn||fadeOut))
+		cycleLogo();
+		
+	}
+
+	if(key=='3')
+	{
+		sourceMode++;
+		sourceMode = sourceMode%3;
+		fadeOut = true;
+		// change source mode
 	}
 }
 

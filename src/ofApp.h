@@ -15,8 +15,15 @@ using namespace flowTools;
 class ofApp : public ofBaseApp{
 
 	public:
-		bool startFlow = false;
+		bool startFlow = true;
 		bool debug = false;
+		bool doReset = false;
+		bool fadeOut = false;
+		bool fadeIn = true;
+
+		ofTexture tex;
+
+		double mastBright = 1.0;
 
 		ofxKinect kinect;
 		ofxCvGrayscaleImage grayImage; // grayscale depth image
@@ -48,6 +55,9 @@ class ofApp : public ofBaseApp{
 		void update();
 		void draw();
 		void exit();
+		void initflow();
+		void initsources();
+		void cycleLogo();		
 
 		int flowWidth;
 		int flowHeight;
@@ -62,7 +72,10 @@ class ofApp : public ofBaseApp{
 
 		// time
 		float t;
+		int t_ms;
 		float dt;
+		int t_hours;
+		int t_mins;
 
 		ofFbo tmpFbo;
 
@@ -70,9 +83,16 @@ class ofApp : public ofBaseApp{
 		ftDrawForce* drawForces;
 
 		// logo
+		vector<string> images;
+		int logoID;
 		ofImage logo;
 		bool showLogo;
 
+
+		ofXml XML;
+		void getXMLsources();
+		string xmlStructure;
+		string message;
 		float sourceRadius;
 		vector <float> sourceX;
 		vector <float> sourceY;
@@ -80,6 +100,10 @@ class ofApp : public ofBaseApp{
 		vector <float> velocityY;
 		vector <float> radii;
 		vector <ofFloatColor> colors;
+		int sourceMode = 0;
+		ofFloatColor c1;
+		ofFloatColor c2;
+		int NS1;
 
 
 		// mouse
