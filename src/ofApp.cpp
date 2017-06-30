@@ -75,6 +75,8 @@ void ofApp::setup(){
 	
 	getXMLsources();
 
+	updateSourceMode();
+
 	initsources();
 
 	initflow();
@@ -182,6 +184,8 @@ void ofApp::update(){
 	dt = ofGetElapsedTimef() - t;
 	t = ofGetElapsedTimef();
 
+	updateSourceMode();
+
 	// cycle logos every so often
 	t_ms = ofGetElapsedTimeMillis();
 	int t_s = t_ms/1000;
@@ -195,24 +199,10 @@ void ofApp::update(){
 		
 	}
 
-	t_hours = ofGetHours();
-	t_mins = ofGetMinutes();
-	if (t_hours>22 && (t_hours <= 23 && t_mins<30 ))
-	{
-		sourceMode = 0;
-	}
-	else if((t_hours>=23 && t_mins>=30) || t_hours<1)
-	{
-		sourceMode = 1;		
-	}
-	else
-	{
-		sourceMode = 2;
-	}
-
+	float minBright = 0.01;
 	if (fadeOut)
 	{
-		if(mastBright>=0.02)
+		if(mastBright>=minBright)
 		{
 			mastBright *= 0.99;
 		}
@@ -227,7 +217,7 @@ void ofApp::update(){
 	{
 		if (mastBright==0)
 		{
-			mastBright = 0.02;
+			mastBright = minBright;
 		}
 
 		if(mastBright<1.0)
@@ -322,6 +312,25 @@ void ofApp::update(){
 
 }
 
+void ofApp::updateSourceMode()
+{
+	t_hours = ofGetHours();
+	t_mins = ofGetMinutes();
+	if (t_hours>22 && (t_hours <= 23 && t_mins<30 ))
+	{
+		sourceMode = 0;
+	}
+	else if((t_hours>=23 && t_mins>=30) || t_hours<1)
+	{
+		sourceMode = 1;		
+	}
+	else
+	{
+		sourceMode = 2;
+	}
+
+}
+
 //--------------------------------------------------------------
 void ofApp::draw(){
 	ofClear(0,0);
@@ -348,6 +357,8 @@ void ofApp::draw(){
 
 			// grayImage.draw(0,0);
 			// ofPopMatrix();
+
+			// ofDrawEllipse(mouseX, mouseY, 100, 100);
 
 			kinectFbo.draw(0,0);
 			

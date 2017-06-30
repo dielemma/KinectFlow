@@ -119,6 +119,7 @@ class ofApp : public ofBaseApp{
 
 		// draw methods
 		void updateConstantSources();
+		void updateSourceMode();
 		void drawComposite() {drawComposite(0,0,drawWidth,drawHeight);}
 		void drawComposite(int x, int y, int w, int  h);
 
